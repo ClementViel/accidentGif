@@ -21,6 +21,10 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.core.Preview
 import androidx.camera.core.CameraSelector
 import android.util.Log
+import android.view.ContextMenu
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
@@ -55,6 +59,7 @@ class MainActivity : AppCompatActivity() {
 
         // Request camera permissions
         if (allPermissionsGranted()) {
+            Log.e(TAG,"creating activity")
             startCamera()
         } else {
             ActivityCompat.requestPermissions(
@@ -65,6 +70,24 @@ class MainActivity : AppCompatActivity() {
         viewBinding.imageCaptureButton.setOnClickListener { triggerGif(5) }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
+        Log.e(TAG,"create toolbar")
+        setSupportActionBar(viewBinding.menuToolbar)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean{
+        Log.e(TAG,"create menu")
+        viewBinding.menuToolbar.inflateMenu(R.menu.right_corner)
+
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        Log.e(TAG,"select menu")
+
+        when (item.itemId) {
+            R.id.settings-> Log.d(TAG, "menu selected")
+        }
+        return super.onOptionsItemSelected(item)
     }
     private fun triggerGif(num_pic: Int) {
         var pathToFiles = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString()
@@ -110,9 +133,6 @@ class MainActivity : AppCompatActivity() {
 
                     override fun
                             onImageSaved(output: ImageCapture.OutputFileResults){
-                        val msg = "Photo capture succeeded: ${output.savedUri}"
-                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                        Log.d(TAG, msg)
                         gifMaker.notifySaved()
 
                     }
@@ -200,7 +220,7 @@ class MainActivity : AppCompatActivity() {
     fun creatGif(ffmpeg_command: String) {
         var session = FFmpegKit.execute(ffmpeg_command)
         if (session.returnCode.isValueSuccess) {
-            Log.d(TAG,"zsuccess")
+            Log.d(TAG,"success")
         } else {
             Log.e(TAG, "failure")
         }
