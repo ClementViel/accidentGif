@@ -16,5 +16,6 @@
     <string name="gif_output_path">GIF output path</string>
     <string name="settings_menu">Settings</string>
     <string name="seetings">settings</string>
+    <string name="configuration">Configuration</string>
 
 </resources>

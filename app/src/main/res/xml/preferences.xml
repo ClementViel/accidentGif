@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:isPreferenceVisible="false"
+    android:persistent="true"
+    tools:ignore="NamespaceTypo">
     <!--below line is to create preference category-->
-    <EditTextPreference
-        android:key="@string/gif_output_path"
-        android:defaultValue="set prefered path"/>
+    <PreferenceCategory
+        android:isPreferenceVisible="true"
+        android:key="configuration_category"
+        android:orderingFromXml="true"
+        android:persistent="true"
+        android:title="@string/configuration">
+        <EditTextPreference
+            android:defaultValue="set prefered path"
+            android:key="@string/gif_output_path"
+            android:title="GIF output path" />
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="picture number"
+            android:title="picture number" />
+    </PreferenceCategory>
 </PreferenceScreen>

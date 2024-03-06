@@ -2,9 +2,13 @@ package com.example.accidentgif
 
 import android.Manifest
 import android.content.ContentValues
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.net.Uri
+import android.os.Environment.getExternalStorageDirectory
+import android.os.FileUtils
 import android.provider.MediaStore
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ImageCapture
@@ -25,6 +29,7 @@ import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.activity.result.ActivityResultLauncher
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
@@ -34,8 +39,11 @@ import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.PermissionChecker
+import androidx.fragment.app.commit
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFmpegSession
+import java.io.File
+import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -46,14 +54,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
 
     private var imageCapture: ImageCapture? = null
-    private var gifMaker = GifMaker(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString(), 5)
-
+    private var pic_num = 5
+    private var gifMaker = GifMaker(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString(), pic_num)
+    private var outputPath = "/storage/emulated/0/Pictures/gif"
     private var recording: Recording? = null
 
     private lateinit var cameraExecutor: ExecutorService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
@@ -72,32 +82,32 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         Log.e(TAG,"create toolbar")
         setSupportActionBar(viewBinding.menuToolbar)
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean{
         Log.e(TAG,"create menu")
         viewBinding.menuToolbar.inflateMenu(R.menu.right_corner)
-
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        Log.e(TAG,"select menu")
-
         when (item.itemId) {
-            R.id.settings-> Log.d(TAG, "menu selected")
+            // launch settings activity
+            R.id.settings-> {
+                Log.e(TAG,"select menu")
+                val intent = Intent(this, SettingsActivity()::class.java)
+                startActivity(intent)
+
+            }
         }
         return super.onOptionsItemSelected(item)
     }
     private fun triggerGif(num_pic: Int) {
-        var pathToFiles = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString()
         var fullFileNameOut = "test.gif"
         for (index in 0..num_pic) {
            takePhoto()
         }
-        Log.d(TAG, "saved at  ${pathToFiles}")
-
-
     }
     private fun takePhoto() {
             // Get a stable reference of the modifiable image capture use case
@@ -106,20 +116,11 @@ class MainActivity : AppCompatActivity() {
             // Create time stamped name and MediaStore entry.
             val name = "IMG-$name_suffix"
             name_suffix++
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                if(Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image")
-                }
-            }
 
-            // Create output options object which contains file + metadata
-            val outputOptions = ImageCapture.OutputFileOptions
-                .Builder(contentResolver,
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    contentValues)
-                .build()
+
+        val file = File("${outputPath}/${name}.jpeg").createNewFile()
+        val outputOptions = ImageCapture.OutputFileOptions
+            .Builder(FileOutputStream("${outputPath}/${name}.jpeg")).build()
 
             // Set up image capture listener, which is triggered after photo has
             // been taken
@@ -132,7 +133,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     override fun
-                            onImageSaved(output: ImageCapture.OutputFileResults){
+                            onImageSaved(output: ImageCapture.OutputFileResults) {
                         gifMaker.notifySaved()
 
                     }
@@ -185,7 +186,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TAG = "CameraXApp"
+        private const val TAG = "Accident GIF"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS =
@@ -204,17 +205,24 @@ class MainActivity : AppCompatActivity() {
  class GifMaker(var pathToFiles: String,var num_pics: Int) {
      private var pattern: String = "[0-9]+"
      private var num_saved = 0
+     private var dir = "/storage/emulated/0/Pictures/gif"
 
     companion object {
         private const val TAG = "GifMaker"
     }
-
+     fun deleteDirectory(directory: File) {
+         for (file in directory.listFiles()) {
+             if (!file.isDirectory) {
+                 file.delete()
+             }
+         }
+     }
     fun notifySaved() {
         num_saved++;
         // On pics_completed trigger gif
         if (num_saved == num_pics+1) {
             Log.d(TAG, "5 images in $pathToFiles")
-            creatGif("-framerate 25 -f image2 -i '/storage/emulated/0/Pictures/CameraX-Image/IMG-%d.jpg' -vf scale=531x299,transpose=1 /storage/emulated/0/Pictures/CameraX-Image/test.gif")
+            creatGif("-framerate 25 -f image2 -i '/storage/emulated/0/Pictures/gif/IMG-%d.jpeg' -vf scale=531x299,transpose=1 /storage/emulated/0/Pictures/test.gif")
         }
     }
     fun creatGif(ffmpeg_command: String) {
@@ -224,10 +232,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             Log.e(TAG, "failure")
         }
-
-    }
-
-    fun saveGif(path: String) {
+        deleteDirectory(File(dir))
 
     }
 
