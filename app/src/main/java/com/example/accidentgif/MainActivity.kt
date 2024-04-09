@@ -1,55 +1,28 @@
 package com.example.accidentgif
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.net.Uri
-import android.os.Environment.getExternalStorageDirectory
-import android.os.FileUtils
-import android.provider.MediaStore
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ImageCapture
-import androidx.camera.video.Recorder
-import androidx.camera.video.Recording
-import androidx.camera.video.VideoCapture
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.accidentgif.databinding.ActivityMainBinding
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import android.widget.Toast
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.core.Preview
 import androidx.camera.core.CameraSelector
 import android.util.Log
-import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import androidx.activity.result.ActivityResultLauncher
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
-import androidx.camera.video.FallbackStrategy
-import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
-import androidx.camera.video.VideoRecordEvent
-import androidx.core.content.PermissionChecker
-import androidx.fragment.app.commit
 import com.arthenica.ffmpegkit.FFmpegKit
-import com.arthenica.ffmpegkit.FFmpegSession
 import java.io.File
 import java.io.FileOutputStream
-import java.nio.ByteBuffer
-import java.text.SimpleDateFormat
-import java.util.Locale
 
-typealias LumaListener = (luma: Double) -> Unit
-var name_suffix = 0
 class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
 
@@ -112,7 +85,6 @@ class MainActivity : AppCompatActivity() {
         val imageCapture = imageCapture ?: return
         // Create time stamped name and MediaStore entry.
         val name = "IMG-$photo_num"
-        val file = File("${outputPath}/${name}.jpeg").createNewFile()
         val outputOptions = ImageCapture.OutputFileOptions
         .Builder(FileOutputStream("${outputPath}/${name}.jpeg")).build()
 
@@ -178,7 +150,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "Accident GIF"
-        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
@@ -196,13 +167,11 @@ class MainActivity : AppCompatActivity() {
   class GifMaker private constructor() {
      companion object {
          private const val TAG = "GifMaker"
-         private var pattern: String = "[0-9]+"
          private var num_saved = 0
          private var dir = "/storage/emulated/0/Pictures/gif"
          private var picNum = 20
          @Volatile
          private var instance: GifMaker? = null
-
 
          fun getInstance() =
              instance ?: synchronized(this) {
@@ -221,24 +190,22 @@ class MainActivity : AppCompatActivity() {
          }
 
         fun creatGif(ffmpeg_command: String, callback: () -> Unit) {
-            synchronized(this) {
-                var session = FFmpegKit.execute(ffmpeg_command)
-                if (session.returnCode.isValueSuccess) {
-                    Log.d(TAG, "success")
-                } else {
-                    Log.e(TAG, "failure")
-                }
-
-                if (!deleteDirectory(File(dir))) {
-                    Log.e(TAG, "failed to remove base images")
-                }
-                num_saved = 0
-                callback()
+            val session = FFmpegKit.execute(ffmpeg_command)
+            if (session.returnCode.isValueSuccess) {
+                Log.d(TAG, "success")
+            } else {
+                Log.e(TAG, "failure")
             }
+
+            if (!deleteDirectory(File(dir))) {
+                Log.e(TAG, "failed to remove base images")
+            }
+            num_saved = 0
+            callback()
         }
      }
       fun notifySaved(callback: () -> Unit) {
-          num_saved++;
+          num_saved++
           // On pics_completed trigger gif
           Log.e(TAG, "picture saved")
           if (num_saved == picNum+1) {
@@ -249,7 +216,7 @@ class MainActivity : AppCompatActivity() {
       fun notifyPreferenceChanged(key: String, value: String) {
           if (key =="GIF output path") {
               Log.e(TAG,"dir changed")
-              dir = value;
+              dir = value
           } else if (key == R.string.pic_num.toString()) {
               Log.e(TAG,"dir changed")
               picNum = value.toInt()
