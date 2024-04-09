@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CameraXApp</string>
+    <string name="app_name">GIF 4000</string>
     <string name="trigger_gif">GIT IT</string>
     <string name="start_capture">Start Capture</string>
     <string name="stop_capture">Stop Capture</string>
@@ -14,6 +14,7 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
     <string name="gif_output_path">GIF output path</string>
+    <string name="pic_num">picture number</string>
     <string name="settings_menu">Settings</string>
     <string name="seetings">settings</string>
     <string name="configuration">Configuration</string>

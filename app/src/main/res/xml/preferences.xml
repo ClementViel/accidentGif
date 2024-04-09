@@ -12,11 +12,11 @@
         android:persistent="true"
         android:title="@string/configuration">
         <EditTextPreference
-            android:defaultValue="set prefered path"
+            android:defaultValue="/storage/emulated/0/Pictures/gif"
             android:key="@string/gif_output_path"
             android:title="GIF output path" />
         <EditTextPreference
-            android:defaultValue="5"
+            android:defaultValue="20"
             android:key="picture number"
             android:title="picture number" />
     </PreferenceCategory>

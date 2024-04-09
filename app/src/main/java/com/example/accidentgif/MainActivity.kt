@@ -54,12 +54,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
 
     private var imageCapture: ImageCapture? = null
-    private var pic_num = 5
-    private var gifMaker = GifMaker(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString(), pic_num)
+    private var pic_num = 20
+    private val gifMaker = GifMaker.getInstance()
     private var outputPath = "/storage/emulated/0/Pictures/gif"
-    private var recording: Recording? = null
 
     private lateinit var cameraExecutor: ExecutorService
+    val enableButton: (()->Unit) = { viewBinding.imageCaptureButton.isEnabled = true; Log.e(TAG, "callback") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,10 +77,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Set up the listeners for take photo and video capture buttons
-        viewBinding.imageCaptureButton.setOnClickListener { triggerGif(5) }
-
+        viewBinding.imageCaptureButton.setOnClickListener { triggerGif(pic_num) }
         cameraExecutor = Executors.newSingleThreadExecutor()
-        Log.e(TAG,"create toolbar")
         setSupportActionBar(viewBinding.menuToolbar)
 
     }
@@ -98,47 +96,40 @@ class MainActivity : AppCompatActivity() {
                 Log.e(TAG,"select menu")
                 val intent = Intent(this, SettingsActivity()::class.java)
                 startActivity(intent)
-
             }
         }
         return super.onOptionsItemSelected(item)
     }
-    private fun triggerGif(num_pic: Int) {
-        var fullFileNameOut = "test.gif"
-        for (index in 0..num_pic) {
-           takePhoto()
-        }
+     private fun triggerGif(num_pic: Int) {
+         viewBinding.imageCaptureButton.isEnabled = false
+         for (index in 0..num_pic) {
+             takePhoto(index)
+         }
     }
-    private fun takePhoto() {
-            // Get a stable reference of the modifiable image capture use case
-            val imageCapture = imageCapture ?: return
 
-            // Create time stamped name and MediaStore entry.
-            val name = "IMG-$name_suffix"
-            name_suffix++
-
-
+    private fun takePhoto(photo_num :Int) {
+        // Get a stable reference of the modifiable image capture use case
+        val imageCapture = imageCapture ?: return
+        // Create time stamped name and MediaStore entry.
+        val name = "IMG-$photo_num"
         val file = File("${outputPath}/${name}.jpeg").createNewFile()
         val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(FileOutputStream("${outputPath}/${name}.jpeg")).build()
+        .Builder(FileOutputStream("${outputPath}/${name}.jpeg")).build()
 
-            // Set up image capture listener, which is triggered after photo has
-            // been taken
-            imageCapture.takePicture(
-                outputOptions,
-                ContextCompat.getMainExecutor(this),
-                object : ImageCapture.OnImageSavedCallback {
-                    override fun onError(exc: ImageCaptureException) {
-                        Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                    }
-
-                    override fun
-                            onImageSaved(output: ImageCapture.OutputFileResults) {
-                        gifMaker.notifySaved()
-
-                    }
+        // Set up image capture listener, which is triggered after photo has
+        // been taken
+        imageCapture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(this),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                 }
-            )
+
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) =
+                    gifMaker.notifySaved(enableButton)
+            }
+        )
     }
 
     private fun startCamera() {
@@ -202,38 +193,69 @@ class MainActivity : AppCompatActivity() {
 }
 
 
- class GifMaker(var pathToFiles: String,var num_pics: Int) {
-     private var pattern: String = "[0-9]+"
-     private var num_saved = 0
-     private var dir = "/storage/emulated/0/Pictures/gif"
+  class GifMaker private constructor() {
+     companion object {
+         private const val TAG = "GifMaker"
+         private var pattern: String = "[0-9]+"
+         private var num_saved = 0
+         private var dir = "/storage/emulated/0/Pictures/gif"
+         private var picNum = 20
+         @Volatile
+         private var instance: GifMaker? = null
 
-    companion object {
-        private const val TAG = "GifMaker"
-    }
-     fun deleteDirectory(directory: File) {
-         for (file in directory.listFiles()) {
-             if (!file.isDirectory) {
-                 file.delete()
+
+         fun getInstance() =
+             instance ?: synchronized(this) {
+                 instance ?: GifMaker().also { instance = it }
              }
+
+         fun deleteDirectory(directory: File): Boolean {
+             var ret = true
+             for (file in directory.listFiles()!!) {
+                 if (!file.isDirectory && file.name != "test.gif") {
+                     Log.e(TAG,"erasing $file.name")
+                     ret = file.delete()
+                 }
+             }
+             return ret
          }
+
+        fun creatGif(ffmpeg_command: String, callback: () -> Unit) {
+            synchronized(this) {
+                var session = FFmpegKit.execute(ffmpeg_command)
+                if (session.returnCode.isValueSuccess) {
+                    Log.d(TAG, "success")
+                } else {
+                    Log.e(TAG, "failure")
+                }
+
+                if (!deleteDirectory(File(dir))) {
+                    Log.e(TAG, "failed to remove base images")
+                }
+                num_saved = 0
+                callback()
+            }
+        }
      }
-    fun notifySaved() {
-        num_saved++;
-        // On pics_completed trigger gif
-        if (num_saved == num_pics+1) {
-            Log.d(TAG, "5 images in $pathToFiles")
-            creatGif("-framerate 25 -f image2 -i '/storage/emulated/0/Pictures/gif/IMG-%d.jpeg' -vf scale=531x299,transpose=1 /storage/emulated/0/Pictures/test.gif")
-        }
-    }
-    fun creatGif(ffmpeg_command: String) {
-        var session = FFmpegKit.execute(ffmpeg_command)
-        if (session.returnCode.isValueSuccess) {
-            Log.d(TAG,"success")
-        } else {
-            Log.e(TAG, "failure")
-        }
-        deleteDirectory(File(dir))
+      fun notifySaved(callback: () -> Unit) {
+          num_saved++;
+          // On pics_completed trigger gif
+          Log.e(TAG, "picture saved")
+          if (num_saved == picNum+1) {
+              creatGif("-loglevel quiet -y -framerate 25 -f image2 -i '/storage/emulated/0/Pictures/gif/IMG-%d.jpeg' -vf scale=531x299,transpose=1 ${dir}/test.gif", callback)
+          }
+      }
 
-    }
-
+      fun notifyPreferenceChanged(key: String, value: String) {
+          if (key =="GIF output path") {
+              Log.e(TAG,"dir changed")
+              dir = value;
+          } else if (key == R.string.pic_num.toString()) {
+              Log.e(TAG,"dir changed")
+              picNum = value.toInt()
+          } else {
+              Log.e(TAG, "Preference Not supported")
+          }
+          Log.e(TAG, "dir ${dir} pciture num ${picNum}")
+      }
 }
