@@ -3,7 +3,6 @@ package com.example.accidentgif
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.util.Log
 
 private const val TAG = "IntentReceiver"
@@ -30,7 +29,7 @@ class IntentReceiver : BroadcastReceiver() {
     }
 
     private fun handleText(intent: Intent) {
-        var command = intent.getStringExtra("command")
+        val command = intent.getStringExtra("command")
         Log.e(TAG, "this is command: $command")
         when (command) {
             "take photo" -> {

@@ -28,10 +28,6 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         @Volatile
         private var instance: GifMaker? = null
 
-        fun getGifNum() : Int {
-            return this.gif_num
-        }
-
         fun getPicNum() : Int {
             return this.picNum
         }
@@ -45,7 +41,7 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
 
         fun createDirectory(path: String) {
             try {
-                val dir: File = File(path)
+                val dir = File(path)
                 if (!dir.exists()) {
                     dir.mkdirs()
                 }
@@ -54,11 +50,9 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
             }
         }
         fun deleteDirectory(path: String) {
-            var ret = true
             for (file in File(path).listFiles()!!) {
                 if (!file.isDirectory) {
-                    Log.e(TAG,"erasing $file.name")
-                    ret = file.delete()
+                    file.delete()
                 }
             }
             num_gif_session = 0
@@ -67,10 +61,8 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         fun creatGif(ffmpeg_command: String, callback: () -> Unit) {
             val session = FFmpegKit.execute(ffmpeg_command)
             if (session.returnCode.isValueSuccess) {
-                Log.d(TAG, "success")
                 num_gif_session++
             } else {
-                Log.e(TAG, "failure")
                 num_gif_session = 0
             }
             num_saved = 0
@@ -104,11 +96,9 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         )
     }
     fun notifySaved(callback: () -> Unit) {
-        var gif_name = "res_gif${num_gif_session}"
+        val gif_name = "res_gif${num_gif_session}"
         num_saved++
         // On pics_completed trigger gif
-        Log.e(TAG, "picture saved ${num_saved}")
-
         if (num_saved == picNum+1) {
             creatGif(" -y -framerate ${framerate} -f image2 -i '/storage/emulated/0/Pictures/gif4000/gif/IMG-%d.jpeg' -vf scale=768x1020 ${dir}/${gif_name}.gif", callback)
             photoCount = 0
@@ -118,19 +108,13 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
 
     fun notifyPreferenceChanged(key: String, value: String) {
         if (key == "gif number") {
-            Log.e(TAG,"gif number changed")
             gif_num = value.toInt()
         } else if (key == "picture number"){
-            Log.e(TAG,"picture number changed")
             picNum = value.toInt()
         } else if (key == "framerate") {
-            Log.e(TAG,"framerate")
             framerate = value.toInt()
         } else {
             Log.e(TAG, "Preference ${key} Not supported")
         }
-        Log.e(TAG, "gif num ${gif_num} pciture num ${picNum}, framerate ${framerate}")
     }
-
-
 }
