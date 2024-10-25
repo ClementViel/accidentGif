@@ -6,4 +6,13 @@
     </style>
 
     <style name="Theme.AccidentGif" parent="Base.Theme.AccidentGif" />
+
+    <style name="Theme.AccidentGif.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.AccidentGif.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.AccidentGif.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

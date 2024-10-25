@@ -12,12 +12,16 @@
         android:persistent="true"
         android:title="@string/configuration">
         <EditTextPreference
-            android:defaultValue="/storage/emulated/0/Pictures/gif"
-            android:key="@string/gif_output_path"
-            android:title="GIF output path" />
+            android:defaultValue="1"
+            android:key="@string/gif_number"
+            android:title="number of GIFs to generate" />
         <EditTextPreference
             android:defaultValue="20"
-            android:key="picture number"
-            android:title="picture number" />
+            android:key="@string/pic_num"
+            android:title="@string/pic_num" />
+        <EditTextPreference
+            android:defaultValue="25"
+            android:key="@string/framerate"
+            android:title="@string/framerate" />
     </PreferenceCategory>
 </PreferenceScreen>
