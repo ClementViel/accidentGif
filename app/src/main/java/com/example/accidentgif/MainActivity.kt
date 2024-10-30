@@ -35,7 +35,6 @@ class MainActivity : AppCompatActivity() {
     private var imageCapture: ImageCapture? = null
     private var outputPath = "/storage/emulated/0/Pictures/gif4000/gif"
     private var outPath = "/storage/emulated/0/Pictures/gif4000"
-    private lateinit var share: FileSharing
     private lateinit var cameraExecutor: ExecutorService
     val enableButton: (()->Unit) = { viewBinding.imageCaptureButton.isEnabled = true; Log.e(TAG, "callback") }
     private lateinit var gifmaker: GifMaker

@@ -23,6 +23,7 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         private var picNum = 29
         private var gif_num = 1
         private var framerate = 25
+        @Volatile
         private var num_gif_session = 0
 
         @Volatile
@@ -61,6 +62,7 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         fun creatGif(ffmpeg_command: String, callback: () -> Unit) {
             val session = FFmpegKit.execute(ffmpeg_command)
             if (session.returnCode.isValueSuccess) {
+                //TODO: change this as global variables for singleton are unsusable
                 num_gif_session++
             } else {
                 num_gif_session = 0
@@ -68,6 +70,19 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
             num_saved = 0
             callback()
         }
+    }
+
+    private fun getGifNumber(path: String) : Int{
+        var numFiles: Int = 0
+        try {
+            val dir = File(path)
+            if (dir.exists()) {
+                numFiles = dir.listFiles()!!.size
+            }
+        } catch (e: Exception) {
+            Log.w("creating file error", e.toString())
+        }
+        return numFiles
     }
      fun takePhoto() {
          photoCount++
@@ -96,7 +111,9 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         )
     }
     fun notifySaved(callback: () -> Unit) {
-        val gif_name = "res_gif${num_gif_session}"
+        var numGif = getGifNumber(dir)
+        Log.e(TAG, "num gif is ${numGif}")
+        val gif_name = "res_gif${numGif++}"
         num_saved++
         // On pics_completed trigger gif
         if (num_saved == picNum+1) {
