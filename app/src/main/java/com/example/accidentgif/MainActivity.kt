@@ -80,10 +80,13 @@ class MainActivity : AppCompatActivity() {
     private val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == Activity.RESULT_OK) {
             val gifUri: Uri? = it.data?.data
+            Log.e(TAG, "scanning into mediastore ?")
+
             if (gifUri != null) {
+                Log.e(TAG, "scanning into mediastore")
                 MediaScannerConnection.scanFile(applicationContext,
                     arrayOf(gifUri.path.toString()),
-                    arrayOf("image/*"),
+                    arrayOf("*/*"),
                     MediaScannerConnection.OnScanCompletedListener { path, _ ->
                         // Use the FileProvider to get a content URI
                         val requestFile = File(path)

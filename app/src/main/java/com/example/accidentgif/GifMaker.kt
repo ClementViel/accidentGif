@@ -1,10 +1,14 @@
 package com.example.accidentgif
 
 import android.content.Context
+import android.content.Intent
+import android.media.MediaScannerConnection
+import android.net.Uri
 import android.util.Log
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.arthenica.ffmpegkit.FFmpegKit
 import java.io.File
 import java.io.FileOutputStream
@@ -23,6 +27,7 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         private var picNum = 29
         private var gif_num = 1
         private var framerate = 25
+        private var  gif_name = "res0.gif"
         @Volatile
         private var num_gif_session = 0
 
@@ -60,11 +65,19 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         }
 
         fun creatGif(ffmpeg_command: String, callback: () -> Unit) {
+           val gifpath = "${dir}/${gif_name}.gif"
+
             val session = FFmpegKit.execute(ffmpeg_command)
             if (session.returnCode.isValueSuccess) {
                 //TODO: change this as global variables for singleton are unsusable
-                num_gif_session++
+                MediaScannerConnection.scanFile(instance!!.context,
+                    arrayOf(gifpath),
+                    arrayOf("*/*"),
+                    MediaScannerConnection.OnScanCompletedListener { path, _ -> Log.e(TAG,"${gifpath} scanned")}
+                )
+
             } else {
+                Log.e(TAG, "session failed")
                 num_gif_session = 0
             }
             num_saved = 0
@@ -113,7 +126,7 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
     fun notifySaved(callback: () -> Unit) {
         var numGif = getGifNumber(dir)
         Log.e(TAG, "num gif is ${numGif}")
-        val gif_name = "res_gif${numGif++}"
+        gif_name = "res_gif${numGif++}"
         num_saved++
         // On pics_completed trigger gif
         if (num_saved == picNum+1) {
