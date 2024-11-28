@@ -120,7 +120,7 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         )
     }
     fun notifySaved(callback: () -> Unit) {
-        val activity = context as  MainActivity
+        val activity = context as MainActivity
         var numGif = getGifNumber(dir)
         Log.e(TAG, "saved picture is ${num_saved}")
         gif_name = "res_gif${numGif++}"
@@ -131,7 +131,7 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         if (num_saved == picNum+1) {
 
             creatGif(" -y -framerate ${framerate} -f image2 -i '/storage/emulated/0/Pictures/gif4000/gif/IMG-%d.jpeg' -vf scale=768x1020 ${dir}${gif_name}.gif", callback)
-            activity.changeProgressBarText("GIF ITz")
+            activity.changeProgressBarText("GIF IT")
             photoCount = 0
             deleteDirectory("${dir}/gif")
         }
