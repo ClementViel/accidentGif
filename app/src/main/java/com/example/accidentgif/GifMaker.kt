@@ -1,14 +1,11 @@
 package com.example.accidentgif
 
 import android.content.Context
-import android.content.Intent
 import android.media.MediaScannerConnection
-import android.net.Uri
 import android.util.Log
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import com.arthenica.ffmpegkit.FFmpegKit
 import java.io.File
 import java.io.FileOutputStream
@@ -70,11 +67,10 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
             val session = FFmpegKit.execute(ffmpeg_command)
             if (session.returnCode.isValueSuccess) {
                 //TODO: change this as global variables for singleton are unsusable
-                MediaScannerConnection.scanFile(instance!!.context,
-                    arrayOf(gifpath),
-                    arrayOf("*/*"),
-                    MediaScannerConnection.OnScanCompletedListener { path, _ -> Log.e(TAG,"${gifpath} scanned")}
-                )
+                MediaScannerConnection.scanFile(/* context = */ instance!!.context,
+                    /* paths = */ arrayOf(gifpath),
+                    /* mimeTypes = */ arrayOf("*/*")
+                ) { path, _ -> Log.e(TAG, "${gifpath} scanned") }
 
             } else {
                 Log.e(TAG, "session failed")
@@ -124,13 +120,18 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         )
     }
     fun notifySaved(callback: () -> Unit) {
+        val activity = context as  MainActivity
         var numGif = getGifNumber(dir)
-        Log.e(TAG, "num gif is ${numGif}")
+        Log.e(TAG, "saved picture is ${num_saved}")
         gif_name = "res_gif${numGif++}"
         num_saved++
         // On pics_completed trigger gif
+
+        activity.setProgressBarProgress(num_saved)
         if (num_saved == picNum+1) {
-            creatGif(" -y -framerate ${framerate} -f image2 -i '/storage/emulated/0/Pictures/gif4000/gif/IMG-%d.jpeg' -vf scale=768x1020 ${dir}/${gif_name}.gif", callback)
+
+            creatGif(" -y -framerate ${framerate} -f image2 -i '/storage/emulated/0/Pictures/gif4000/gif/IMG-%d.jpeg' -vf scale=768x1020 ${dir}${gif_name}.gif", callback)
+            activity.changeProgressBarText("GIF ITz")
             photoCount = 0
             deleteDirectory("${dir}/gif")
         }

@@ -10,9 +10,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -36,8 +38,10 @@ class MainActivity : AppCompatActivity() {
     private var outputPath = "/storage/emulated/0/Pictures/gif4000/gif"
     private var outPath = "/storage/emulated/0/Pictures/gif4000"
     private lateinit var cameraExecutor: ExecutorService
-    val enableButton: (()->Unit) = { viewBinding.imageCaptureButton.isEnabled = true; Log.e(TAG, "callback") }
+    val enableButton: (()->Unit) = { viewBinding.imageCaptureButton.isEnabled = true; viewBinding.progressBar.visibility = View.INVISIBLE; resetProgressBarText(); Log.e(TAG, "callback") }
     private lateinit var gifmaker: GifMaker
+    private var lensFacing: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private val handler = Handler()
 
 
 
@@ -62,18 +66,35 @@ class MainActivity : AppCompatActivity() {
 
         // Set up the listeners for take photo and video capture buttons
         viewBinding.imageCaptureButton.setOnClickListener { triggerGif() }
-        viewBinding.imageShareButton.setOnClickListener { openFolder(outPath)}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            viewBinding.imageShareButton.setOnClickListener { openFolder(outPath) }
+        }
+        viewBinding.frontCameraButton.setOnClickListener { switchCamera()}
         //Set up listener for sharing button
         cameraExecutor = Executors.newSingleThreadExecutor()
         setSupportActionBar(viewBinding.menuToolbar)
     }
+
+    private fun switchCamera() {
+        if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
+            lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+            viewBinding.frontCameraButton.setText("TA GUEULE")
+        } else {
+            lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+            viewBinding.frontCameraButton.setText("MA GUEULE")
+        }
+        startCamera()
+    }
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun openFolder(location: String) {
         val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
         val uri: Uri = Uri.parse(location)
         Log.e(TAG, "opening ${uri.path.toString()}")
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.setDataAndType(uri, "*/*")
-        resultLauncher.launch(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            resultLauncher.launch(intent)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -128,12 +149,32 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
+    fun setProgressBarProgress(step: Int) {
+        Log.e(TAG, (step * viewBinding.progressBar.max / GifMaker.getPicNum()).toString() )
+        handler.post(kotlinx.coroutines.Runnable {
+            viewBinding.imageCaptureButton.text = (step * viewBinding.progressBar.max / GifMaker.getPicNum()).toString() + "%"
+        })
+    }
+
+    fun changeProgressBarText(text: String) {
+        Log.e(TAG, "changing text")
+        handler.post(kotlinx.coroutines.Runnable {
+            viewBinding.imageCaptureButton.text = text
+        })
+    }
+
+    fun resetProgressBarText() {
+        viewBinding.imageCaptureButton.text = R.string.trigger_gif.toString()
+    }
+
      fun triggerGif() {
+         viewBinding.progressBar.visibility = View.VISIBLE
          viewBinding.imageCaptureButton.isEnabled = false
          for (index in 0..GifMaker.getPicNum()) {
              gifmaker.takePhoto()
          }
-    }
+     }
 
     private fun createGifInstance() {
         Log.e(TAG, "Gif instance created")
@@ -158,8 +199,6 @@ class MainActivity : AppCompatActivity() {
             imageCapture = ImageCapture.Builder().build()
             // Create GifMaker Instance after ImageCapture is built. TODO(exit gracefully)
             createGifInstance()
-            // Select back camera as a default
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
                 // Unbind use cases before rebinding
@@ -167,7 +206,7 @@ class MainActivity : AppCompatActivity() {
 
                 // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture)
+                    this, lensFacing, preview, imageCapture)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
@@ -194,7 +233,7 @@ class MainActivity : AppCompatActivity() {
             mutableListOf (
                 Manifest.permission.CAMERA,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
-
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
             ).apply {
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -202,3 +241,4 @@ class MainActivity : AppCompatActivity() {
             }.toTypedArray()
     }
 }
+

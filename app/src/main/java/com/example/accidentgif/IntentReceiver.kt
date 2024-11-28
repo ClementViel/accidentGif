@@ -36,7 +36,7 @@ class IntentReceiver : BroadcastReceiver() {
                 gif.takePhoto()
             }
             "erase" -> {
-                GifMaker.deleteDirectory("/storage/emulated/0/Pictures/gif4000/")
+                GifMaker.deleteDirectory("/storage/emulated/0/Pictures/gif4000")
             }
              else -> Log.e(TAG, "unrecognized command")
         }

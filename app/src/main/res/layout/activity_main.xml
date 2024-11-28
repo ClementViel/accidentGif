@@ -13,10 +13,10 @@
         android:id="@+id/viewFinder"
         android:layout_width="419dp"
         android:layout_height="419dp"
-        android:layout_marginTop="184dp"
+        android:layout_marginTop="116dp"
         app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="-4dp"
-        tools:ignore="MissingConstraints" />
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="1dp" />
 
     <Button
         android:id="@+id/image_share_button"
@@ -35,12 +35,25 @@
         android:id="@+id/image_capture_button"
         android:layout_width="110dp"
         android:layout_height="110dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="16dp"
         android:elevation="2dp"
         android:text="@string/trigger_gif"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.903"
+        app:layout_constraintHorizontal_bias="0.946"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/front_camera_button"
+        android:layout_width="110dp"
+        android:layout_height="110dp"
+        android:layout_marginBottom="16dp"
+        android:elevation="2dp"
+        android:text="@string/front_camera"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -55,13 +68,30 @@
         android:id="@+id/menu_toolbar"
         android:layout_width="409dp"
         android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"
-        android:minHeight="?attr/actionBarSize"
-        android:theme="?attr/actionBarTheme"
+        android:background="#FFEB3B"
+        android:minHeight="@dimen/app_bar_height"
+        tools:ignore="MissingConstraints"
         tools:layout_editor_absoluteX="1dp"
-        tools:layout_editor_absoluteY="6dp"
-        tools:ignore="MissingConstraints" />
+        tools:layout_editor_absoluteY="0dp" />
 
+    <ProgressBar
+        android:id="@+id/progress_Bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="233dp"
+        android:layout_height="94dp"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="32dp"
+        android:indeterminate="true"
+        android:max="100"
+        android:minWidth="200dp"
+        android:minHeight="50dp"
+        android:progress="0"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.25"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
