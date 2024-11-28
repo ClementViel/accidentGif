@@ -38,7 +38,12 @@ class MainActivity : AppCompatActivity() {
     private var outputPath = "/storage/emulated/0/Pictures/gif4000/gif"
     private var outPath = "/storage/emulated/0/Pictures/gif4000"
     private lateinit var cameraExecutor: ExecutorService
-    val enableButton: (()->Unit) = { viewBinding.imageCaptureButton.isEnabled = true; viewBinding.progressBar.visibility = View.INVISIBLE; resetProgressBarText(); Log.e(TAG, "callback") }
+    val enableButton: (()->Unit) = {
+        viewBinding.imageCaptureButton.isEnabled = true;
+        viewBinding.progressBar.visibility = View.INVISIBLE;
+        viewBinding.frontCameraButton.isEnabled = true;
+        Log.e(TAG, "callback")
+    }
     private lateinit var gifmaker: GifMaker
     private var lensFacing: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private lateinit var cameraProvider: ProcessCameraProvider
@@ -166,6 +171,7 @@ class MainActivity : AppCompatActivity() {
      fun triggerGif() {
          viewBinding.progressBar.visibility = View.VISIBLE
          viewBinding.imageCaptureButton.isEnabled = false
+         viewBinding.frontCameraButton.isEnabled = false;
          for (index in 0..GifMaker.getPicNum()) {
              gifmaker.takePhoto()
          }
