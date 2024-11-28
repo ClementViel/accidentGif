@@ -82,7 +82,7 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
     }
 
     private fun getGifNumber(path: String) : Int{
-        var numFiles: Int = 0
+        var numFiles = 0
         try {
             val dir = File(path)
             if (dir.exists()) {

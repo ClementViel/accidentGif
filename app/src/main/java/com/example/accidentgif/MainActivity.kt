@@ -37,11 +37,13 @@ class MainActivity : AppCompatActivity() {
     private var imageCapture: ImageCapture? = null
     private var outputPath = "/storage/emulated/0/Pictures/gif4000/gif"
     private var outPath = "/storage/emulated/0/Pictures/gif4000"
+    private var frontCameraText = "MA GUEULE"
+    private var rearCameraText = "TA GUEULE"
     private lateinit var cameraExecutor: ExecutorService
-    val enableButton: (()->Unit) = {
-        viewBinding.imageCaptureButton.isEnabled = true;
-        viewBinding.progressBar.visibility = View.INVISIBLE;
-        viewBinding.frontCameraButton.isEnabled = true;
+    private val enableButton: (()->Unit) = {
+        viewBinding.imageCaptureButton.isEnabled = true
+        viewBinding.progressBar.visibility = View.INVISIBLE
+        viewBinding.frontCameraButton.isEnabled = true
         Log.e(TAG, "callback")
     }
     private lateinit var gifmaker: GifMaker
@@ -51,10 +53,9 @@ class MainActivity : AppCompatActivity() {
     private val preview: Preview by lazy {
         Preview.Builder().build()
             .also {
-                it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+                it.surfaceProvider = viewBinding.viewFinder.surfaceProvider
             }
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,7 +112,7 @@ class MainActivity : AppCompatActivity() {
                     MediaScannerConnection.OnScanCompletedListener { path, _ ->
                         // Use the FileProvider to get a content URI
                         val requestFile = File(path)
-                        val fileUri: Uri? = try {
+                        try {
                             FileProvider.getUriForFile(
                                 this@MainActivity,
                                 "com.example.accidentgif",
@@ -119,7 +120,6 @@ class MainActivity : AppCompatActivity() {
                         } catch (e: IllegalArgumentException) {
                             Log.e("File Selector",
                                 "The selected file can't be shared: $requestFile")
-                            null
                         }
                         val shareIntent: Intent = Intent().apply {
                             action = Intent.ACTION_SEND
@@ -164,14 +164,10 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun resetProgressBarText() {
-        viewBinding.imageCaptureButton.text = R.string.trigger_gif.toString()
-    }
-
-     fun triggerGif() {
+     private fun triggerGif() {
          viewBinding.progressBar.visibility = View.VISIBLE
          viewBinding.imageCaptureButton.isEnabled = false
-         viewBinding.frontCameraButton.isEnabled = false;
+         viewBinding.frontCameraButton.isEnabled = false
          for (index in 0..GifMaker.getPicNum()) {
              gifmaker.takePhoto()
          }
@@ -185,10 +181,10 @@ class MainActivity : AppCompatActivity() {
     private fun switchCamera() {
         if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
             lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
-            viewBinding.frontCameraButton.setText("TA GUEULE")
+            viewBinding.frontCameraButton.text = frontCameraText
         } else {
             lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-            viewBinding.frontCameraButton.setText("MA GUEULE")
+            viewBinding.frontCameraButton.text = rearCameraText
         }
         cameraProvider.unbindAll()
         cameraProvider.bindToLifecycle(
@@ -202,10 +198,9 @@ class MainActivity : AppCompatActivity() {
         cameraProviderFuture.addListener({
             // Used to bind the lifecycle of cameras to the lifecycle owner
            cameraProvider = cameraProviderFuture.get()
-
-            imageCapture = ImageCapture.Builder().build()
-            // Create GifMaker Instance after ImageCapture is built. TODO(exit gracefully)
-            createGifInstance()
+           imageCapture = ImageCapture.Builder().build()
+           // Create GifMaker Instance after ImageCapture is built. TODO(exit gracefully)
+           createGifInstance()
 
             try {
                 // Unbind use cases before rebinding
