@@ -41,8 +41,14 @@ class MainActivity : AppCompatActivity() {
     val enableButton: (()->Unit) = { viewBinding.imageCaptureButton.isEnabled = true; viewBinding.progressBar.visibility = View.INVISIBLE; resetProgressBarText(); Log.e(TAG, "callback") }
     private lateinit var gifmaker: GifMaker
     private var lensFacing: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private lateinit var cameraProvider: ProcessCameraProvider
     private val handler = Handler()
-
+    private val preview: Preview by lazy {
+        Preview.Builder().build()
+            .also {
+                it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+            }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,16 +60,15 @@ class MainActivity : AppCompatActivity() {
         // Request camera permissions
         if (allPermissionsGranted()) {
             Log.e(TAG,"creating activity")
-                startCamera()
+
                 Log.e(TAG, "camera has started")
 
         } else {
             Log.e(TAG, "not granted permissions")
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
-            startCamera()
         }
-
+        startCamera()
         // Set up the listeners for take photo and video capture buttons
         viewBinding.imageCaptureButton.setOnClickListener { triggerGif() }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -75,16 +80,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(viewBinding.menuToolbar)
     }
 
-    private fun switchCamera() {
-        if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
-            lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
-            viewBinding.frontCameraButton.setText("TA GUEULE")
-        } else {
-            lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-            viewBinding.frontCameraButton.setText("MA GUEULE")
-        }
-        startCamera()
-    }
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun openFolder(location: String) {
         val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
@@ -181,6 +176,18 @@ class MainActivity : AppCompatActivity() {
         gifmaker = GifMaker.getInstance(imageCapture!!, outputPath, enableButton, this)
     }
 
+    private fun switchCamera() {
+        if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
+            lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+            viewBinding.frontCameraButton.setText("TA GUEULE")
+        } else {
+            lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+            viewBinding.frontCameraButton.setText("MA GUEULE")
+        }
+        cameraProvider.unbindAll()
+        cameraProvider.bindToLifecycle(
+            this, lensFacing, preview, imageCapture)
+    }
     @SuppressLint("RestrictedApi")
     private fun startCamera(): ListenableFuture<ProcessCameraProvider> {
 
@@ -188,14 +195,8 @@ class MainActivity : AppCompatActivity() {
 
         cameraProviderFuture.addListener({
             // Used to bind the lifecycle of cameras to the lifecycle owner
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+           cameraProvider = cameraProviderFuture.get()
 
-            // Preview
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
-                }
             imageCapture = ImageCapture.Builder().build()
             // Create GifMaker Instance after ImageCapture is built. TODO(exit gracefully)
             createGifInstance()
