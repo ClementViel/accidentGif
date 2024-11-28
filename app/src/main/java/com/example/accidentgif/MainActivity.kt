@@ -59,7 +59,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
@@ -134,15 +133,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean{
-        Log.e(TAG,"create menu")
         viewBinding.menuToolbar.inflateMenu(R.menu.right_corner)
         return true
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            // launch settings activity
             R.id.settings-> {
-                Log.e(TAG,"select menu")
                 val intent = Intent(this, SettingsActivity()::class.java)
                 startActivity(intent)
             }
@@ -158,7 +154,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun changeProgressBarText(text: String) {
-        Log.e(TAG, "changing text")
         handler.post(kotlinx.coroutines.Runnable {
             viewBinding.imageCaptureButton.text = text
         })
@@ -174,7 +169,6 @@ class MainActivity : AppCompatActivity() {
      }
 
     private fun createGifInstance() {
-        Log.e(TAG, "Gif instance created")
         gifmaker = GifMaker.getInstance(imageCapture!!, outputPath, enableButton, this)
     }
 
@@ -190,9 +184,9 @@ class MainActivity : AppCompatActivity() {
         cameraProvider.bindToLifecycle(
             this, lensFacing, preview, imageCapture)
     }
+
     @SuppressLint("RestrictedApi")
     private fun startCamera(): ListenableFuture<ProcessCameraProvider> {
-
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
@@ -205,16 +199,13 @@ class MainActivity : AppCompatActivity() {
             try {
                 // Unbind use cases before rebinding
                 cameraProvider.unbindAll()
-
                 // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
                     this, lensFacing, preview, imageCapture)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
-
         }, ContextCompat.getMainExecutor(this))
-
         return cameraProviderFuture
     }
 

@@ -27,7 +27,6 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         private var  gif_name = "res0.gif"
         @Volatile
         private var num_gif_session = 0
-
         @Volatile
         private var instance: GifMaker? = null
 
@@ -71,7 +70,6 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
                     /* paths = */ arrayOf(gifpath),
                     /* mimeTypes = */ arrayOf("*/*")
                 ) { path, _ -> Log.e(TAG, "${gifpath} scanned") }
-
             } else {
                 Log.e(TAG, "session failed")
                 num_gif_session = 0
@@ -93,18 +91,15 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
         }
         return numFiles
     }
+
      fun takePhoto() {
          photoCount++
          createDirectory(outPath)
-
         // Get a stable reference of the modifiable image capture use case
         // Create time stamped name and MediaStore entry.
         val name = "IMG-$photoCount"
         val outputOptions = ImageCapture.OutputFileOptions
             .Builder(FileOutputStream("${outPath}/${name}.jpeg")).build()
-
-        // Set up image capture listener, which is triggered after photo has
-        // been taken
 
         capture!!.takePicture(
             outputOptions,
@@ -113,23 +108,22 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                 }
-
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) =
                     notifySaved(cb)
             }
         )
     }
+
     fun notifySaved(callback: () -> Unit) {
         val activity = context as MainActivity
         var numGif = getGifNumber(dir)
         Log.e(TAG, "saved picture is ${num_saved}")
         gif_name = "res_gif${numGif++}"
         num_saved++
-        // On pics_completed trigger gif
 
         activity.setProgressBarProgress(num_saved)
+        // On pics_completed trigger gif
         if (num_saved == picNum+1) {
-
             creatGif(" -y -framerate ${framerate} -f image2 -i '/storage/emulated/0/Pictures/gif4000/gif/IMG-%d.jpeg' -vf scale=768x1020 ${dir}${gif_name}.gif", callback)
             activity.changeProgressBarText("GIF IT")
             photoCount = 0
@@ -138,14 +132,11 @@ class GifMaker private constructor(imageCapture: ImageCapture?, outputPath: Stri
     }
 
     fun notifyPreferenceChanged(key: String, value: String) {
-        if (key == "gif number") {
-            gif_num = value.toInt()
-        } else if (key == "picture number"){
-            picNum = value.toInt()
-        } else if (key == "framerate") {
-            framerate = value.toInt()
-        } else {
-            Log.e(TAG, "Preference ${key} Not supported")
+        when(key) {
+            "gif number" -> gif_num = value.toInt()
+            "picture number" -> picNum = value.toInt()
+            "framerate" -> framerate = value.toInt()
+            else -> Log.e(TAG, "Preference ${key} Not supported")
         }
     }
 }
